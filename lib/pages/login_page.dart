@@ -1,4 +1,4 @@
-// ignore_for_file: use_key_in_widget_constructors, prefer_const_constructors_in_immutables
+// ignore_for_file: use_key_in_widget_constructors, prefer_const_constructors_in_immutables, depend_on_referenced_packages, use_build_context_synchronously, avoid_print
 
 import 'package:flutter/material.dart';
 import 'package:pixelpro/componentes/Cores/Cores.dart';
@@ -8,7 +8,6 @@ import 'package:pixelpro/componentes/botoes/login_buttom_widget.dart';
 import 'package:pixelpro/componentes/botoes/text_buttom_widget.dart';
 import 'package:pixelpro/componentes/campos/text_field_login_string.dart';
 import 'package:pixelpro/componentes/fontes/fontes.dart';
-import 'package:pixelpro/pages/home_page.dart';
 import 'package:pixelpro/pages/register_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -19,16 +18,34 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  // TextFieldLoginStringWidget txtUser = TextFieldLoginStringWidget(
-  //   textInputAction: TextInputAction.next,
-  //   placeholder: 'Email Andress',
-  //   validator: (str) =>
-  //       str == null || str.isEmpty ? 'Usuário é obrigatório' : '',
-  // );
+  // late UsuarioModel usuario;
+  // final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // Future<void> _signInWithEmailAndPassword() async {
+  //   try {
+  //     final UserCredential userCredential =
+  //         await _auth.signInWithEmailAndPassword(
+  //       email: usuario.email!,
+  //       password: usuario.senha!,
+  //     );
+  //     final User? user = userCredential.user;
+
+  //     if (user != null) {
+  //       Navigator.of(context).push(
+  //         MaterialPageRoute(
+  //           builder: (context) => HomePage(),
+  //         ),
+  //       );
+  //     }
+  //   } catch (e) {
+  //     print("Erro de autenticação: $e");
+  //   }
+  // }
 
   @override
   void initState() {
     super.initState();
+    // usuario = UsuarioModel.empty();
   }
 
   @override
@@ -36,6 +53,7 @@ class _LoginPageState extends State<LoginPage> {
     double fullWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.transparent,
       body: Container(
         width: double.infinity,
@@ -62,6 +80,7 @@ class _LoginPageState extends State<LoginPage> {
               child: TextFieldLoginStringWidget(
                 textInputAction: TextInputAction.next,
                 placeholder: 'Email Address',
+                // onChanged: (value) => usuario.email = value,
                 validator: (str) =>
                     str == null || str.isEmpty ? 'Usuário é obrigatório' : '',
               ),
@@ -72,6 +91,8 @@ class _LoginPageState extends State<LoginPage> {
               child: TextFieldLoginStringWidget(
                 textInputAction: TextInputAction.next,
                 placeholder: 'Password',
+                password: true,
+                // onChanged: (value) => usuario.senha = value,
                 validator: (str) =>
                     str == null || str.isEmpty ? 'Senha é obrigatória' : '',
               ),
@@ -91,11 +112,7 @@ class _LoginPageState extends State<LoginPage> {
             LoginButtomWidget(
               text: 'Login',
               onPressed: () => {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => HomePage(),
-                  ),
-                ),
+                // _signInWithEmailAndPassword(),
               },
             ),
             const SizedBox(height: 50),

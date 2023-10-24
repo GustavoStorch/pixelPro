@@ -1,9 +1,8 @@
-// ignore_for_file: library_private_types_in_public_api, use_key_in_widget_constructors, no_logic_in_create_state, overridden_fields, annotate_overrides
+// ignore_for_file: library_private_types_in_public_api, use_key_in_widget_constructors, no_logic_in_create_state, overridden_fields, annotate_overrides, prefer_if_null_operators
 
 import 'package:flutter/material.dart';
 import 'package:pixelpro/componentes/cores/Cores.dart';
 import 'package:pixelpro/componentes/fontes/fontes.dart';
-import 'package:pixelpro/componentes/icones/icones.dart';
 
 class TextFieldLoginStringWidget extends StatefulWidget {
   TextFieldLoginStringWidget({
@@ -11,7 +10,9 @@ class TextFieldLoginStringWidget extends StatefulWidget {
     this.password = false,
     this.validator,
     this.textInputAction,
+    this.onChanged,
     this.onFieldSubmitted,
+    this.readOnly = false,
     Key? key,
   }) : super(key: key);
 
@@ -23,6 +24,8 @@ class TextFieldLoginStringWidget extends StatefulWidget {
   final String Function(String? str)? validator;
   final TextInputAction? textInputAction;
   final void Function(String? str)? onFieldSubmitted;
+  final void Function(String str)? onChanged;
+  final bool readOnly;
 
   String get text => key.currentState!.controller.text;
 
@@ -40,6 +43,7 @@ class TextFieldLoginStringWidget extends StatefulWidget {
       _TextFieldLoginStringWidgetState(
         key: key,
         textInputAction: textInputAction,
+        onChanged: onChanged,
       );
 }
 
@@ -48,9 +52,11 @@ class _TextFieldLoginStringWidgetState
   _TextFieldLoginStringWidgetState({
     Key? key,
     this.textInputAction,
+    this.onChanged,
   });
   final FocusNode focusNode = FocusNode();
   final TextInputAction? textInputAction;
+  final void Function(String str)? onChanged;
 
   final TextEditingController controller = TextEditingController();
   bool visible = false;
@@ -77,15 +83,11 @@ class _TextFieldLoginStringWidgetState
             ),
             child: TextField(
               textInputAction: textInputAction,
-              onChanged: (value) {
-                String error = '';
-                if (widget.validator != null) {
-                  String? validatedString = widget.validator!(value);
-                  error = validatedString;
+              onChanged: (String? str) {
+                if (!widget.readOnly) {
+                  validate();
+                  if (onChanged != null) onChanged!(str == null ? '' : str);
                 }
-                setState(() {
-                  errorText = error;
-                });
               },
               obscureText: !visible && widget.password,
               obscuringCharacter: '*',
@@ -104,9 +106,10 @@ class _TextFieldLoginStringWidgetState
                         onTap: () => setState(
                           () => visible = !visible,
                         ),
-                        child: visible
-                            ? Icones.iconeSenhaVisivel
-                            : Icones.iconeSenhaInvisivel,
+                        child: Icon(
+                          visible ? Icons.visibility : Icons.visibility_off,
+                          color: Colors.grey,
+                        ),
                       )
                     : null,
                 filled: true,

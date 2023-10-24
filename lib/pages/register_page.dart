@@ -29,6 +29,7 @@ class _RegisterPageState extends State<RegisterPage> {
     double fullWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.transparent,
       body: Container(
         width: double.infinity,
@@ -65,6 +66,7 @@ class _RegisterPageState extends State<RegisterPage> {
               child: TextFieldLoginStringWidget(
                 textInputAction: TextInputAction.next,
                 placeholder: 'Password',
+                password: true,
                 validator: (str) =>
                     str == null || str.isEmpty ? 'Senha é obrigatória' : '',
               ),
@@ -75,6 +77,7 @@ class _RegisterPageState extends State<RegisterPage> {
               child: TextFieldLoginStringWidget(
                 textInputAction: TextInputAction.next,
                 placeholder: 'Confirm Password',
+                password: true,
                 validator: (str) => str == null || str.isEmpty
                     ? 'Confirmação da senha é obrigatória'
                     : '',

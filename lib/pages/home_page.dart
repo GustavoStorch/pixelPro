@@ -1,11 +1,13 @@
-// ignore_for_file: unused_local_variable, depend_on_referenced_packages, use_key_in_widget_constructors
+// ignore_for_file: depend_on_referenced_packages, use_key_in_widget_constructors, avoid_print, avoid_function_literals_in_foreach_calls
 
+import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pixelpro/componentes/Cores/Cores.dart';
-import 'package:pixelpro/componentes/fontes/fontes.dart';
 import 'package:pixelpro/pages/edit_page.dart';
 import 'package:pixelpro/pages/login_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -16,11 +18,19 @@ class _HomePageState extends State<HomePage> {
   Future<void> _getImageFromGallery(BuildContext context) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      await uploadImageToFirebase(pickedFile.path, DateTime.now());
+    }
   }
 
   Future<void> _takePhoto(BuildContext context) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.camera);
+
+    if (pickedFile != null) {
+      await uploadImageToFirebase(pickedFile.path, DateTime.now());
+    }
   }
 
   @override
@@ -28,6 +38,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('PixelPro Digital'),
+        centerTitle: true,
         backgroundColor: const Color(0xFF9A6BD4),
         actions: [
           IconButton(
@@ -53,28 +64,65 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                Image.asset(
-                  'assets/pixelpro.png',
-                  width: 150.0,
-                  height: 150.0,
-                ),
-                const SizedBox(height: 20.0),
-                Text(
-                  'PixelPro Digital',
-                  style: Fontes.getRoboto(
-                      fontSize: 24.0, cor: Cores.corTextoBranco),
-                ),
-                const SizedBox(height: 20.0),
-                Text(
-                  'Sejam Bem-Vindos!',
-                  style: Fontes.getRoboto(
-                      fontSize: 24.0, cor: Cores.corTextoBranco),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Clique na câmera e comece a editar!',
-                  style: Fontes.getRoboto(
-                      fontSize: 14.0, cor: Cores.corTextoBranco),
+                FutureBuilder(
+                  future: getFirebaseImages(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(
+                          child: Text('Nenhuma imagem encontrada.'));
+                    }
+
+                    final imageUrls = snapshot.data;
+
+                    return Expanded(
+                      child: GridView.builder(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                        ),
+                        itemCount: imageUrls!.length,
+                        itemBuilder: (context, index) {
+                          return GestureDetector(
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: const Text("Excluir imagem?"),
+                                    content: const Text(
+                                        "Tem certeza de que deseja excluir esta imagem?"),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        child: const Text("Cancelar"),
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                      TextButton(
+                                        child: const Text("Excluir"),
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                          deleteImageFromFirestore(imageUrls[
+                                              index]); // Chama a função para excluir a imagem
+                                        },
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                            child: Image.network(
+                              imageUrls[index],
+                              fit: BoxFit.cover,
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -145,5 +193,66 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
     );
+  }
+
+  Future<void> uploadImageToFirebase(String imagePath, DateTime data) async {
+    final storage = FirebaseStorage.instance;
+    final storageRef = storage.ref().child(
+        'images/${DateTime.now().millisecondsSinceEpoch.toString()}.jpg');
+    final uploadTask = storageRef.putFile(File(imagePath));
+    await uploadTask.whenComplete(() async {
+      final url = await storageRef.getDownloadURL();
+      print('URL da imagem: $url');
+
+      final firestore = FirebaseFirestore.instance;
+      await firestore.collection('imagens').add({
+        'url': url,
+        'data': data,
+      });
+    });
+  }
+
+  Future<void> deleteImageFromFirestore(String imageUrl) async {
+    final firestore = FirebaseFirestore.instance;
+    final imageReference =
+        firestore.collection('imagens').where('url', isEqualTo: imageUrl);
+
+    try {
+      final querySnapshot = await imageReference.get();
+      querySnapshot.docs.forEach((doc) {
+        doc.reference.delete();
+      });
+      print('Informações da imagem excluídas com sucesso do Firestore.');
+    } catch (e) {
+      print('Erro ao excluir informações da imagem no Firestore: $e');
+    }
+  }
+
+  void updateImage(String imageUrl) async {
+    // Exclua a imagem existente
+    await deleteImageFromFirestore(imageUrl);
+
+    // Agora, permita que o usuário selecione a nova imagem
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      // Faça o upload da nova imagem
+      await uploadImageToFirebase(pickedFile.path, DateTime.now());
+    }
+  }
+
+  Future<List<String>> getFirebaseImages() async {
+    final firestore = FirebaseFirestore.instance;
+    final snapshot = await firestore.collection('imagens').get();
+
+    if (snapshot.docs.isEmpty) {
+      return [];
+    }
+
+    final imageUrls =
+        snapshot.docs.map((doc) => doc.data()['url'].toString()).toList();
+
+    return imageUrls;
   }
 }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "859987225465",
+    "project_id": "pixelpro-d1f1a",
+    "storage_bucket": "pixelpro-d1f1a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:859987225465:android:04bdaf0d09349eaf465da8",
+        "android_client_info": {
+          "package_name": "com.example.pixelpro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCZLhoXOTUSKa_92Vp3h0BB-LtBTetWWik"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
