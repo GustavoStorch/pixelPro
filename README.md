@@ -44,3 +44,8 @@ Este app possui as seguintes funcionalidades a serem desenvolvidas:
 - Caso esteja no Android Studio, vá em File > Settings > Languages & Frameworks > Flutter e insira o caminho da pasta do SDK do Flutter em Flutter SDK path;
 - Abra o arquivo pubspec.yaml e clique em pub get para que as dependências (pacotes) utilizadas no projeto sejam carregadas;
 - Execute a aplicação.
+
+  ## Atualização 25/10/2023
+    Foram realizadas algumas melhorias no aplicativo, sendo todas em torno da adição do banco de dados firebase ao aplicativo, agora é possível realizar o login no app através do authentication, utilizando-se do email e senha cadastros.
+  Além disso agora é possível adicionar imagens dentro do aplicativo, tendo em vista que é um aplicativo de imagens, além de adicionar imagens é possível listar todas as imagens que estão registradas no firebase, e caso queira é possível também remover as imagens.
+  Por fim foi desenvolvido também uma função para atualizar uma determinada imagem porém está funcionalidade ainda não foi implementada na minha lista.
