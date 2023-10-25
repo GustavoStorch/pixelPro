@@ -5,7 +5,6 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pixelpro/componentes/Cores/Cores.dart';
-import 'package:pixelpro/pages/edit_page.dart';
 import 'package:pixelpro/pages/login_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -15,6 +14,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  List<String> imageUrls = [];
   Future<void> _getImageFromGallery(BuildContext context) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -31,6 +31,29 @@ class _HomePageState extends State<HomePage> {
     if (pickedFile != null) {
       await uploadImageToFirebase(pickedFile.path, DateTime.now());
     }
+  }
+
+  Future<void> loadFirebaseImages() async {
+    final firestore = FirebaseFirestore.instance;
+    final snapshot = await firestore.collection('imagens').get();
+
+    if (snapshot.docs.isEmpty) {
+      setState(() {
+        imageUrls = [];
+      });
+      return;
+    }
+
+    setState(() {
+      imageUrls =
+          snapshot.docs.map((doc) => doc.data()['url'].toString()).toList();
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    loadFirebaseImages();
   }
 
   @override
@@ -78,50 +101,63 @@ class _HomePageState extends State<HomePage> {
                     final imageUrls = snapshot.data;
 
                     return Expanded(
-                      child: GridView.builder(
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                        ),
-                        itemCount: imageUrls!.length,
-                        itemBuilder: (context, index) {
-                          return GestureDetector(
-                            onTap: () {
-                              showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    title: const Text("Excluir imagem?"),
-                                    content: const Text(
-                                        "Tem certeza de que deseja excluir esta imagem?"),
-                                    actions: <Widget>[
-                                      TextButton(
-                                        child: const Text("Cancelar"),
-                                        onPressed: () {
-                                          Navigator.of(context).pop();
-                                        },
-                                      ),
-                                      TextButton(
-                                        child: const Text("Excluir"),
-                                        onPressed: () {
-                                          Navigator.of(context).pop();
-                                          deleteImageFromFirestore(imageUrls[
-                                              index]); // Chama a função para excluir a imagem
-                                        },
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-                            },
-                            child: Image.network(
-                              imageUrls[index],
-                              fit: BoxFit.cover,
-                            ),
-                          );
-                        },
+                        child: GridView.builder(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
                       ),
-                    );
+                      itemCount: imageUrls!.length,
+                      itemBuilder: (context, index) {
+                        return Stack(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: const Text("Excluir imagem?"),
+                                      content: const Text(
+                                          "Tem certeza de que deseja excluir esta imagem?"),
+                                      actions: <Widget>[
+                                        TextButton(
+                                          child: const Text("Cancelar"),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: const Text("Excluir"),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                            deleteImageFromFirestore(
+                                                imageUrls[index]);
+                                          },
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              },
+                              child: Image.network(
+                                imageUrls[index],
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            Positioned(
+                              top: 0,
+                              right: 0,
+                              child: IconButton(
+                                icon: const Icon(Icons.edit),
+                                onPressed: () {
+                                  updateImage(imageUrls[index]);
+                                },
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ));
                   },
                 ),
               ],
@@ -148,11 +184,6 @@ class _HomePageState extends State<HomePage> {
                               onTap: () {
                                 Navigator.of(context).pop();
                                 _getImageFromGallery(context);
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => EditPage(),
-                                  ),
-                                );
                               },
                             ),
                             ListTile(
@@ -161,11 +192,6 @@ class _HomePageState extends State<HomePage> {
                               onTap: () {
                                 Navigator.of(context).pop();
                                 _takePhoto(context);
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => EditPage(),
-                                  ),
-                                );
                               },
                             ),
                           ],
@@ -209,6 +235,7 @@ class _HomePageState extends State<HomePage> {
         'url': url,
         'data': data,
       });
+      loadFirebaseImages();
     });
   }
 
@@ -223,21 +250,19 @@ class _HomePageState extends State<HomePage> {
         doc.reference.delete();
       });
       print('Informações da imagem excluídas com sucesso do Firestore.');
+      loadFirebaseImages();
     } catch (e) {
       print('Erro ao excluir informações da imagem no Firestore: $e');
     }
   }
 
   void updateImage(String imageUrl) async {
-    // Exclua a imagem existente
     await deleteImageFromFirestore(imageUrl);
 
-    // Agora, permita que o usuário selecione a nova imagem
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
-      // Faça o upload da nova imagem
       await uploadImageToFirebase(pickedFile.path, DateTime.now());
     }
   }

@@ -8,6 +8,7 @@ import 'package:pixelpro/componentes/botoes/login_buttom_widget.dart';
 import 'package:pixelpro/componentes/botoes/text_buttom_widget.dart';
 import 'package:pixelpro/componentes/campos/text_field_login_string.dart';
 import 'package:pixelpro/componentes/fontes/fontes.dart';
+import 'package:pixelpro/pages/home_page.dart';
 import 'package:pixelpro/pages/register_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -113,6 +114,11 @@ class _LoginPageState extends State<LoginPage> {
               text: 'Login',
               onPressed: () => {
                 // _signInWithEmailAndPassword(),
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => HomePage(),
+                  ),
+                ),
               },
             ),
             const SizedBox(height: 50),
