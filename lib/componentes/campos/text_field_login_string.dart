@@ -85,8 +85,12 @@ class _TextFieldLoginStringWidgetState
               textInputAction: textInputAction,
               onChanged: (String? str) {
                 if (!widget.readOnly) {
-                  validate();
-                  if (onChanged != null) onChanged!(str == null ? '' : str);
+                  if (widget.validator != null) {
+                    validate();
+                  }
+                  if (widget.onChanged != null) {
+                    widget.onChanged!(str == null ? '' : str);
+                  }
                 }
               },
               obscureText: !visible && widget.password,
